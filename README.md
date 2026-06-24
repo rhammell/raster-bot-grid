@@ -1,26 +1,14 @@
-# grid-bot
+# raster-bot-grid
 
-Grid-bot is a two wheeled Arduino based robot that follows a user drawn path on a touchscreen. The project includes an on-board UI and is compiled with the standard Arduino IDE.
-
-## Hardware requirements
-
-* **Microcontroller** – ESP32 board (the firmware uses the ESP32 `FSPI` bus and the Raster Bot pin map).
-* **Display** – 320×240 ILI9341 TFT display on `FSPI` (CS 17, DC 15, RST 16, SCLK 13, MOSI 14) with the backlight on pin 12.
-* **Touchscreen** – FT6206 capacitive touch panel over I2C (SDA 21, SCL 18).
-* **Motors** – Two DC drive motors connected through a motor driver (motor control is not yet implemented; the UI is display-only for now).
-* **Power** – Suitable battery pack for the motors and microcontroller.
+`raster-bot-grid` is an Arduino sketch for the [Raster Bot](https://github.com/rhammell/raster-bot). It turns the bot's touchscreen into a drawable grid: tap adjacent cells to sketch a path, then the bot drives it. An on-board UI lets you undo the path, start/stop a run, and tweak display brightness, drive speed and drive distance.
 
 ## Compiling with the Arduino IDE
 
 1. Install the Arduino IDE and the ESP32 board support package.
-2. Install the required libraries via the Library Manager:
-   * **Adafruit GFX Library**
-   * **Adafruit ILI9341**
-   * **Adafruit FT6206 Library**
-3. Install the **Raster_Bot** library so it can be found via `#include <Raster_Bot.h>`. Copy (or symlink) the `Raster_Bot` library from the [raster-bot](https://github.com/rhammell/raster-bot) project into your Arduino `libraries` folder (e.g. `~/Documents/Arduino/libraries/Raster_Bot`). The sketch drives the display and touch entirely through a `Raster_Bot` instance.
-4. Open `grid_bot/grid_bot.ino` in the IDE.
-5. Select your ESP32 board and serial port.
-6. Click **Upload** to compile and flash the firmware.
+2. Install the **Raster_Bot** library so it can be found via `#include <Raster_Bot.h>`. Copy (or symlink) the `Raster_Bot` library from the [raster-bot](https://github.com/rhammell/raster-bot) project into your Arduino `libraries` folder (e.g. `~/Documents/Arduino/libraries/Raster_Bot`). Since the library is installed manually, also install its dependencies via the Library Manager: **Adafruit GFX Library**, **Adafruit ILI9341**, and **Adafruit FT6206 Library**.
+3. Open `raster_bot_grid/raster_bot_grid.ino` in the IDE.
+4. Select your ESP32 board and serial port.
+5. Click **Upload** to compile and flash the firmware.
 
 ## Using the UI
 
