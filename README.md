@@ -4,22 +4,23 @@ Grid-bot is a two wheeled Arduino based robot that follows a user drawn path on 
 
 ## Hardware requirements
 
-* **Microcontroller** – Any Arduino compatible board with enough pins (e.g. UNO, MEGA or similar).
-* **Display** – 320×240 ILI9341 TFT display wired to pins 17–19 with an LED pin on 20.
-* **Touchscreen** – Resistive touch panel using the `TouchScreen` library connected to pins 22, 23, A4 and A7.
-* **Motors** – Two DC drive motors connected through a motor driver (such as an L298 based shield or breakout).
+* **Microcontroller** – ESP32 board (the firmware uses the ESP32 `FSPI` bus and the Raster Bot pin map).
+* **Display** – 320×240 ILI9341 TFT display on `FSPI` (CS 17, DC 15, RST 16, SCLK 13, MOSI 14) with the backlight on pin 12.
+* **Touchscreen** – FT6206 capacitive touch panel over I2C (SDA 21, SCL 18).
+* **Motors** – Two DC drive motors connected through a motor driver (motor control is not yet implemented; the UI is display-only for now).
 * **Power** – Suitable battery pack for the motors and microcontroller.
 
 ## Compiling with the Arduino IDE
 
-1. Install the Arduino IDE.
+1. Install the Arduino IDE and the ESP32 board support package.
 2. Install the required libraries via the Library Manager:
    * **Adafruit GFX Library**
    * **Adafruit ILI9341**
-   * **TouchScreen**
-3. Open `Arduino/grid_bot/grid_bot.ino` in the IDE.
-4. Select the board and serial port that match your microcontroller.
-5. Click **Upload** to compile and flash the firmware.
+   * **Adafruit FT6206 Library**
+3. Install the **Raster_Bot** library so it can be found via `#include <Raster_Bot.h>`. Copy (or symlink) the `Raster_Bot` library from the [raster-bot](https://github.com/rhammell/raster-bot) project into your Arduino `libraries` folder (e.g. `~/Documents/Arduino/libraries/Raster_Bot`). The sketch drives the display and touch entirely through a `Raster_Bot` instance.
+4. Open `grid_bot/grid_bot.ino` in the IDE.
+5. Select your ESP32 board and serial port.
+6. Click **Upload** to compile and flash the firmware.
 
 ## Using the UI
 

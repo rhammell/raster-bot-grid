@@ -1,36 +1,12 @@
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_ILI9341.h>
-#include "TouchScreen.h"
+#include <Raster_Bot.h>
 #include "icons.h"
 #include "ui_elements.h"
 #include "grid_model.h"
 #include "settings_manager.h"
 #include "state.h"
 
-// TFT Pins
-#define TFT_CS 17
-#define TFT_DC 18
-#define TFT_RST 19
-#define TFT_LED 20
-
-// TFT display object
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
-
-// Touchscreen Pins
-#define YP A4  // must be an analog pin, use "An" notation!
-#define XP 22  // can be any digital pin
-#define YM 23  // can be any digital pin
-#define XM A7  // must be an analog pin, use "An" notation!
-
-// Touchscreen object
-TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
-
-// Touch screen calibration values
-#define TOUCH_MIN_X 788
-#define TOUCH_MAX_X 995
-#define TOUCH_MIN_Y 782
-#define TOUCH_MAX_Y 993
+// Raster Bot instance (handles display and touch)
+Raster_Bot bot;
 
 // Screen dimensions
 int screenWidth;
@@ -75,32 +51,21 @@ const unsigned long touchDebounceDelay = 200;
 void updateStartButton(int countdownNumber = -1);
 
 void setup() {
-  // Initialize serial communication
-  Serial.begin(9600);
+  Serial.begin(115200);
 
-  // Set ADC resolution for touchsceen
-  analogReadResolution(10);
+  // Initialize display and capacitive touchscreen
+  if (!bot.display.begin()) {
+    Serial.println("Display init failed");
+    while (1);
+  }
 
-  // Configure display LED pin
-  pinMode(TFT_LED, OUTPUT);
-
-  // Set display brightness
+  // Set display orientation and brightness
+  bot.display.setRotation(0);
   setBrightness();
 
-  // start by disabling both SD and TFT
-  pinMode(SS, OUTPUT);
-  digitalWrite(SS, HIGH);
-
-  // Initialize display object
-  tft.begin();
-  tft.setRotation(0);
-
-  // Fill screen with black background
-  tft.fillScreen(BACKGROUND_COLOR);
-
-  // Dynamically get screen dimensions
-  screenWidth = tft.width();
-  screenHeight = tft.height();
+  // Get screen dimensions
+  screenWidth = bot.display.width();
+  screenHeight = bot.display.height();
 
   // Initialize grid model
   initGridModel();
@@ -173,11 +138,11 @@ void initUI() {
 
 void drawUI() {
   // Draw all UI elements
-  uiGrid.drawGridLines(tft);
-  uiGrid.drawGridCells(tft, gridModel, uiState);
-  undoButton.draw(tft);
-  startButton.draw(tft);
-  settingsButton.draw(tft);
+  uiGrid.drawGridLines(bot.display);
+  uiGrid.drawGridCells(bot.display, gridModel, uiState);
+  undoButton.draw(bot.display);
+  startButton.draw(bot.display);
+  settingsButton.draw(bot.display);
 }
 
 void setBrightness() {
@@ -187,8 +152,8 @@ void setBrightness() {
   // Convert percentage (0-100) to PWM value (0-255)
   int pwmOutput = map(displayBrightness, 0, 100, 0, 255);
 
-  // Set PWM output
-  analogWrite(TFT_LED, pwmOutput);
+  // Set display brightness
+  bot.display.setBrightness(pwmOutput);
 }
 
 void updateStartButton(int countdownNumber) {
@@ -275,7 +240,7 @@ void executeMovement() {
         if (millis() - moveStartTime >= FORWARD_MOVE_TIME) {
           // Get current path cell for visual update
           PathCell current = gridModel.getCurrentPathCell();
-          uiGrid.drawGridCells(tft, gridModel, uiState, current.row, current.row, current.col, current.col);
+          uiGrid.drawGridCells(bot.display, gridModel, uiState, current.row, current.row, current.col, current.col);
 
           // Check if we've reached the end of the path
           if (gridModel.isPathComplete()) {
@@ -287,7 +252,7 @@ void executeMovement() {
             uiState = COMPLETE;
             driveState = STOPPED;
             updateStartButton();
-            startButton.draw(tft);
+            startButton.draw(bot.display);
           }
           // Path is not complete, prepare for next movement
           else {
@@ -370,7 +335,7 @@ void handleCountdown() {
 
     // Update and draw start button
     updateStartButton();
-    startButton.draw(tft);
+    startButton.draw(bot.display);
   } 
   // Counting still in progress
   else {
@@ -382,7 +347,7 @@ void handleCountdown() {
 
       // Update button text and draw
       updateStartButton(countdownNumber);
-      startButton.draw(tft);
+      startButton.draw(bot.display);
 
       // Update last displayed number
       lastCountdownNumber = countdownNumber;
@@ -390,7 +355,7 @@ void handleCountdown() {
   }
 }
 
-void handleTouch(TSPoint p) {
+void handleTouch(TS_Point p) {
   // End processing if touch occurred within debounce period
   unsigned long now = millis();
   if (now - lastTouchTime < touchDebounceDelay) {
@@ -400,9 +365,9 @@ void handleTouch(TSPoint p) {
   // Update last touch time
   lastTouchTime = now;
 
-  // Convert touch coordinates from raw values to screen pixel coordinates
-  int pixelX = map(p.x, TOUCH_MIN_X, TOUCH_MAX_X, 0, screenWidth);
-  int pixelY = map(p.y, TOUCH_MIN_Y, TOUCH_MAX_Y, 0, screenHeight);
+  // getTouchPoint() already returns rotation-mapped screen coordinates
+  int pixelX = p.x;
+  int pixelY = p.y;
 
   // --- Touch Event Dispatching ---
   // 
@@ -440,7 +405,7 @@ void onTouchStartButton() {
 
       // Update button text and draw
       updateStartButton(countdownDuration / 1000); 
-      startButton.draw(tft);
+      startButton.draw(bot.display);
       break;
 
     case COUNTING:
@@ -456,12 +421,12 @@ void onTouchStartButton() {
 
       // Update and draw start button
       updateStartButton();
-      startButton.draw(tft);
+      startButton.draw(bot.display);
       break;
   }
 
   // Redraw grid cells
-  uiGrid.drawGridCells(tft, gridModel, uiState);
+  uiGrid.drawGridCells(bot.display, gridModel, uiState);
 }
 
 void onTouchUndoButton() {
@@ -472,7 +437,7 @@ void onTouchUndoButton() {
   gridModel.resetDefaultPath();
 
   // Redraw grid cells
-  uiGrid.drawGridCells(tft, gridModel, uiState);
+  uiGrid.drawGridCells(bot.display, gridModel, uiState);
 }
 
 void onTouchSettingsButton() {
@@ -481,7 +446,7 @@ void onTouchSettingsButton() {
   // In idle state, change to settings state and draw settings menu
   if (uiState == IDLE) {
     uiState = SETTINGS;
-    settingsMenu.draw(tft);
+    settingsMenu.draw(bot.display);
   } 
   // In settings state, change to idle state and draw UI
   else if (uiState == SETTINGS) {
@@ -503,7 +468,7 @@ void onTouchGrid(int pixelX, int pixelY) {
     gridModel.pathAdd(gridRow, gridCol);
 
     // Redraw grid cells
-    uiGrid.drawGridCells(tft, gridModel, uiState, gridRow - 2, gridRow + 2, gridCol - 2, gridCol + 2);
+    uiGrid.drawGridCells(bot.display, gridModel, uiState, gridRow - 2, gridRow + 2, gridCol - 2, gridCol + 2);
   }
 }
 
@@ -530,15 +495,15 @@ void handleSettingsArrow(SettingOption option, int direction) {
     case BRIGHTNESS:
       setBrightness();
       settingsMenu.updateOptionValue(BRIGHTNESS, String(settingsManager.getDisplayBrightness()) + "%");
-      settingsMenu.redrawOption(BRIGHTNESS, tft);
+      settingsMenu.redrawOption(BRIGHTNESS, bot.display);
       break;
     case DRIVE_SPEED:
       settingsMenu.updateOptionValue(DRIVE_SPEED, settingsManager.getDriveSpeedLabel());
-      settingsMenu.redrawOption(DRIVE_SPEED, tft);
+      settingsMenu.redrawOption(DRIVE_SPEED, bot.display);
       break;
     case DRIVE_DISTANCE:
       settingsMenu.updateOptionValue(DRIVE_DISTANCE, settingsManager.getDriveDistanceLabel());
-      settingsMenu.redrawOption(DRIVE_DISTANCE, tft);
+      settingsMenu.redrawOption(DRIVE_DISTANCE, bot.display);
       break;
   }
 }
@@ -548,8 +513,8 @@ void loop() {
   handleState();
 
   // Check for and process discrete user touch events
-  TSPoint p = ts.getPoint();
-  if (p.z > ts.pressureThreshhold) {
+  if (bot.display.touched()) {
+    TS_Point p = bot.display.getTouchPoint();
     handleTouch(p);
   }
 
