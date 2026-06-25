@@ -64,14 +64,7 @@ public:
   static const String* getSettingsLabels();
   static int getSettingsLabelsCount();
   
-  // Helper functions for robust mapping
-  static const char* getSettingLabel(SettingOption option);
-  static int getSettingIndex(SettingOption option);
-  
-  // Utility methods
-  void resetToDefaults();
-  
-  // New method to adjust settings
+  // Adjust a setting in a given direction
   void adjustSetting(SettingOption option, int direction);
 };
 

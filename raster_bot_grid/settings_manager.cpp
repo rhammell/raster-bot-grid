@@ -93,32 +93,6 @@ int SettingsManager::getSettingsLabelsCount() {
   return sizeof(SETTINGS_INFO) / sizeof(SETTINGS_INFO[0]);
 }
 
-// Helper functions for robust mapping
-const char* SettingsManager::getSettingLabel(SettingOption option) {
-  for (int i = 0; i < getSettingsLabelsCount(); i++) {
-    if (SETTINGS_INFO[i].option == option) {
-      return SETTINGS_INFO[i].label;
-    }
-  }
-  return "Unknown"; // Fallback
-}
-
-int SettingsManager::getSettingIndex(SettingOption option) {
-  for (int i = 0; i < getSettingsLabelsCount(); i++) {
-    if (SETTINGS_INFO[i].option == option) {
-      return i;
-    }
-  }
-  return -1; // Not found
-}
-
-// Utility methods
-void SettingsManager::resetToDefaults() {
-  displayBrightness = 60;
-  driveSpeed = SPEED_STANDARD;
-  driveDistance = DISTANCE_STANDARD;
-}
-
 void SettingsManager::adjustSetting(SettingOption option, int direction) {
     switch (option) {
         case BRIGHTNESS:

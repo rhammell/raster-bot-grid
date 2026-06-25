@@ -50,11 +50,9 @@ public:
   // Grid state methods
   bool getGridValue(int row, int col);
   void setGridValue(int row, int col, bool value);
-  bool isCellActivated(int row, int col);
   
   // Path access methods
   PathCell getPathCell(int index);
-  PathCell* getPath();
   int getPathLength();
   int getCurrentPathIndex();
   void setCurrentPathIndex(int index);
@@ -73,7 +71,6 @@ public:
   
   // Utility methods
   bool isInGridBounds(int row, int col);
-  void clearAll();
 };
 
 #endif // GRID_MODEL_H 

@@ -266,7 +266,7 @@ void UIGrid::drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, UIState stat
     for (int i = startRow; i <= endRow; i++) {
         for (int j = startCol; j <= endCol; j++) {
             int color;
-            if (model.isCellActivated(i, j)) {
+            if (model.getGridValue(i, j)) {
                 if (state == RUNNING || state == COMPLETE) {
                     bool isProcessed = false;
                     for (int p = 0; p <= model.getCurrentPathIndex(); p++) {

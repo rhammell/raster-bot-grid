@@ -108,19 +108,11 @@ void GridModel::setGridValue(int row, int col, bool value) {
   }
 }
 
-bool GridModel::isCellActivated(int row, int col) {
-  return getGridValue(row, col);
-}
-
 PathCell GridModel::getPathCell(int index) {
   if (index >= 0 && index < pathLength) {
     return path[index];
   }
   return { -1, -1 }; // Invalid cell
-}
-
-PathCell* GridModel::getPath() {
-  return path;
 }
 
 int GridModel::getPathLength() {
@@ -167,11 +159,6 @@ int GridModel::getNumCols() {
 
 bool GridModel::isInGridBounds(int row, int col) {
   return row >= 0 && row < numRows && col >= 0 && col < numCols;
-}
-
-void GridModel::clearAll() {
-  resetGridValues();
-  resetDefaultPath();
 }
 
 Direction GridModel::getNextDirection() {

@@ -41,7 +41,6 @@ const unsigned long TURN_MOVE_TIME = 2000;     // Time to execute a 90-degree tu
 
 // Current movement tracking
 unsigned long moveStartTime;  // Start time of current movement
-bool isTurning = false;        // Whether bot is currently executing a turn
 
 // Touch debounce delay
 unsigned long lastTouchTime = 0;
@@ -49,6 +48,7 @@ const unsigned long touchDebounceDelay = 200;
 
 // Forward declarations
 void updateStartButton(int countdownNumber = -1);
+void refreshStartButton(int countdownNumber = -1);
 
 void setup() {
   Serial.begin(115200);
@@ -187,6 +187,12 @@ void updateStartButton(int countdownNumber) {
   startButton.setBgColor(currentColor);
 }
 
+void refreshStartButton(int countdownNumber) {
+  // Update the start button's label/color, then redraw it
+  updateStartButton(countdownNumber);
+  startButton.draw(bot.display);
+}
+
 int calculateTurn(Direction currentDir, Direction targetDir) {
   // Calculate difference between current and target direction
   int diff = static_cast<int>(targetDir) - static_cast<int>(currentDir);
@@ -251,8 +257,7 @@ void executeMovement() {
             // Update UI to show completion state
             uiState = COMPLETE;
             driveState = STOPPED;
-            updateStartButton();
-            startButton.draw(bot.display);
+            refreshStartButton();
           }
           // Path is not complete, prepare for next movement
           else {
@@ -334,8 +339,7 @@ void handleCountdown() {
     lastCountdownNumber = -1;
 
     // Update and draw start button
-    updateStartButton();
-    startButton.draw(bot.display);
+    refreshStartButton();
   } 
   // Counting still in progress
   else {
@@ -346,8 +350,7 @@ void handleCountdown() {
     if (countdownNumber != lastCountdownNumber) {
 
       // Update button text and draw
-      updateStartButton(countdownNumber);
-      startButton.draw(bot.display);
+      refreshStartButton(countdownNumber);
 
       // Update last displayed number
       lastCountdownNumber = countdownNumber;
@@ -404,8 +407,7 @@ void onTouchStartButton() {
       countdownStart = millis();
 
       // Update button text and draw
-      updateStartButton(countdownDuration / 1000); 
-      startButton.draw(bot.display);
+      refreshStartButton(countdownDuration / 1000);
       break;
 
     case COUNTING:
@@ -420,8 +422,7 @@ void onTouchStartButton() {
       driveState = STOPPED;
 
       // Update and draw start button
-      updateStartButton();
-      startButton.draw(bot.display);
+      refreshStartButton();
       break;
   }
 
@@ -433,8 +434,7 @@ void onTouchUndoButton() {
   Serial.println("Undo button touched");
 
   // Reset grid values and default path
-  gridModel.resetGridValues();
-  gridModel.resetDefaultPath();
+  gridModel.resetPath();
 
   // Redraw grid cells
   uiGrid.drawGridCells(bot.display, gridModel, uiState);
