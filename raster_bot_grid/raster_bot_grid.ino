@@ -2,7 +2,7 @@
 #include "icons.h"
 #include "ui_elements.h"
 #include "grid_model.h"
-#include "settings_manager.h"
+#include "settings_model.h"
 #include "drive_controller.h"
 
 // UI state for the application's screen/mode state machine
@@ -27,8 +27,8 @@ GridModel gridModel;
 // Drive controller (operates on the grid model)
 DriveController driveController(gridModel);
 
-// Settings manager instance
-SettingsManager settingsManager;
+// Settings model instance
+SettingsModel settingsModel;
 
 // UI elements
 UIIconButton undoButton;
@@ -122,10 +122,10 @@ void initUI() {
   settingsButton.setIcon(SETTINGS_ICON, 24, 24);
 
   // Set settings menu options
-  settingsMenu.setupOptions(SettingsManager::getSettingsLabels(), SettingsManager::getSettingsLabelsCount());
-  settingsMenu.updateOptionValue(BRIGHTNESS, String(settingsManager.getDisplayBrightness()) + "%");
-  settingsMenu.updateOptionValue(DRIVE_SPEED, settingsManager.getDriveSpeedLabel());
-  settingsMenu.updateOptionValue(DRIVE_DISTANCE, settingsManager.getDriveDistanceLabel());
+  settingsMenu.setupOptions(SettingsModel::getSettingsLabels(), SettingsModel::getSettingsLabelsCount());
+  settingsMenu.updateOptionValue(BRIGHTNESS, String(settingsModel.getDisplayBrightness()) + "%");
+  settingsMenu.updateOptionValue(DRIVE_SPEED, settingsModel.getDriveSpeedLabel());
+  settingsMenu.updateOptionValue(DRIVE_DISTANCE, settingsModel.getDriveDistanceLabel());
 
   // Set settings menu bounds
   int menuWidth = gridWidth * 0.85;
@@ -162,7 +162,7 @@ void drawUI() {
 
 void setBrightness() {
   // Get brightness percentage from settings manager
-  int displayBrightness = settingsManager.getDisplayBrightness();
+  int displayBrightness = settingsModel.getDisplayBrightness();
 
   // Convert percentage (0-100) to PWM value (0-255)
   int pwmOutput = map(displayBrightness, 0, 100, 0, 255);
@@ -401,21 +401,21 @@ void onTouchSettingsMenu(int pixelX, int pixelY) {
 
 void handleSettingsArrow(SettingOption option, int direction) {
   // Update the setting option value in the manager
-  settingsManager.adjustSetting(option, direction);
+  settingsModel.adjustSetting(option, direction);
 
   // Update value in settings menu and redraw
   switch (option) {
     case BRIGHTNESS:
       setBrightness();
-      settingsMenu.updateOptionValue(BRIGHTNESS, String(settingsManager.getDisplayBrightness()) + "%");
+      settingsMenu.updateOptionValue(BRIGHTNESS, String(settingsModel.getDisplayBrightness()) + "%");
       settingsMenu.redrawOption(BRIGHTNESS, bot.display);
       break;
     case DRIVE_SPEED:
-      settingsMenu.updateOptionValue(DRIVE_SPEED, settingsManager.getDriveSpeedLabel());
+      settingsMenu.updateOptionValue(DRIVE_SPEED, settingsModel.getDriveSpeedLabel());
       settingsMenu.redrawOption(DRIVE_SPEED, bot.display);
       break;
     case DRIVE_DISTANCE:
-      settingsMenu.updateOptionValue(DRIVE_DISTANCE, settingsManager.getDriveDistanceLabel());
+      settingsMenu.updateOptionValue(DRIVE_DISTANCE, settingsModel.getDriveDistanceLabel());
       settingsMenu.redrawOption(DRIVE_DISTANCE, bot.display);
       break;
   }

@@ -1,5 +1,5 @@
-#ifndef SETTINGS_MANAGER_H
-#define SETTINGS_MANAGER_H
+#ifndef SETTINGS_MODEL_H
+#define SETTINGS_MODEL_H
 
 #include <Arduino.h>
 
@@ -31,7 +31,7 @@ extern const SettingInfo SETTINGS_INFO[];
 extern const char* DRIVE_SPEED_LABELS[];
 extern const char* DRIVE_DISTANCE_LABELS[];
 
-class SettingsManager {
+class SettingsModel {
 private:
   int displayBrightness;
   DriveSpeed driveSpeed;
@@ -39,7 +39,7 @@ private:
   
 public:
   // Constructor
-  SettingsManager();
+  SettingsModel();
   
   // Brightness methods
   int getDisplayBrightness() const;
@@ -68,4 +68,4 @@ public:
   void adjustSetting(SettingOption option, int direction);
 };
 
-#endif // SETTINGS_MANAGER_H 
+#endif // SETTINGS_MODEL_H

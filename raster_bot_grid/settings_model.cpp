@@ -1,4 +1,4 @@
-#include "settings_manager.h"
+#include "settings_model.h"
 
 // Settings option mapping
 const SettingInfo SETTINGS_INFO[] = { 
@@ -10,7 +10,7 @@ const char* DRIVE_SPEED_LABELS[] = { "Slow", "Standard", "Fast" };
 const char* DRIVE_DISTANCE_LABELS[] = { "Compact", "Standard", "Extended" };
 
 // Constructor
-SettingsManager::SettingsManager() {
+SettingsModel::SettingsModel() {
   // Initialize with default values
   displayBrightness = 60;
   driveSpeed = SPEED_STANDARD;
@@ -18,70 +18,70 @@ SettingsManager::SettingsManager() {
 }
 
 // Brightness methods
-int SettingsManager::getDisplayBrightness() const {
+int SettingsModel::getDisplayBrightness() const {
   return displayBrightness;
 }
 
-void SettingsManager::setDisplayBrightness(int brightness) {
+void SettingsModel::setDisplayBrightness(int brightness) {
   displayBrightness = constrain(brightness, 10, 100);
 }
 
-void SettingsManager::adjustBrightness(int delta) {
+void SettingsModel::adjustBrightness(int delta) {
   setDisplayBrightness(displayBrightness + delta);
 }
 
 // Drive speed methods
-DriveSpeed SettingsManager::getDriveSpeed() const {
+DriveSpeed SettingsModel::getDriveSpeed() const {
   return driveSpeed;
 }
 
-void SettingsManager::setDriveSpeed(DriveSpeed speed) {
+void SettingsModel::setDriveSpeed(DriveSpeed speed) {
   driveSpeed = speed;
 }
 
-void SettingsManager::increaseDriveSpeed() {
+void SettingsModel::increaseDriveSpeed() {
   if (driveSpeed < SPEED_FAST) {
     driveSpeed = (DriveSpeed)(driveSpeed + 1);
   }
 }
 
-void SettingsManager::decreaseDriveSpeed() {
+void SettingsModel::decreaseDriveSpeed() {
   if (driveSpeed > SPEED_SLOW) {
     driveSpeed = (DriveSpeed)(driveSpeed - 1);
   }
 }
 
-const char* SettingsManager::getDriveSpeedLabel() const {
+const char* SettingsModel::getDriveSpeedLabel() const {
   return DRIVE_SPEED_LABELS[driveSpeed];
 }
 
 // Drive distance methods
-DriveDistance SettingsManager::getDriveDistance() const {
+DriveDistance SettingsModel::getDriveDistance() const {
   return driveDistance;
 }
 
-void SettingsManager::setDriveDistance(DriveDistance distance) {
+void SettingsModel::setDriveDistance(DriveDistance distance) {
   driveDistance = distance;
 }
 
-void SettingsManager::increaseDriveDistance() {
+void SettingsModel::increaseDriveDistance() {
   if (driveDistance < DISTANCE_EXTENDED) {
     driveDistance = (DriveDistance)(driveDistance + 1);
   }
 }
 
-void SettingsManager::decreaseDriveDistance() {
+void SettingsModel::decreaseDriveDistance() {
   if (driveDistance > DISTANCE_COMPACT) {
     driveDistance = (DriveDistance)(driveDistance - 1);
   }
 }
 
-const char* SettingsManager::getDriveDistanceLabel() const {
+const char* SettingsModel::getDriveDistanceLabel() const {
   return DRIVE_DISTANCE_LABELS[driveDistance];
 }
 
 // Settings labels
-const String* SettingsManager::getSettingsLabels() {
+const String* SettingsModel::getSettingsLabels() {
   static String labels[3];
   for (int i = 0; i < 3; i++) {
     labels[i] = String(SETTINGS_INFO[i].label);
@@ -89,11 +89,11 @@ const String* SettingsManager::getSettingsLabels() {
   return labels;
 }
 
-int SettingsManager::getSettingsLabelsCount() {
+int SettingsModel::getSettingsLabelsCount() {
   return sizeof(SETTINGS_INFO) / sizeof(SETTINGS_INFO[0]);
 }
 
-void SettingsManager::adjustSetting(SettingOption option, int direction) {
+void SettingsModel::adjustSetting(SettingOption option, int direction) {
     switch (option) {
         case BRIGHTNESS:
             adjustBrightness(10 * direction);
@@ -107,4 +107,4 @@ void SettingsManager::adjustSetting(SettingOption option, int direction) {
             else increaseDriveDistance();
             break;
     }
-} 
+}
