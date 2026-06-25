@@ -4,7 +4,6 @@
 #include <Adafruit_ILI9341.h>
 #include <Arduino.h>
 #include "grid_model.h"
-#include "state.h"
 
 // UI Configuration Constants
 #define CELL_SIZE 30
@@ -304,6 +303,14 @@ private:
     int numOptions;
 };
 
+// How grid cells should be highlighted, independent of app state.
+// The controller maps its UIState onto one of these render modes.
+enum GridRenderMode {
+    GRID_RENDER_PLAIN,     // No highlights (e.g. countdown)
+    GRID_RENDER_EDIT,      // Highlight cells the user can select next
+    GRID_RENDER_PROGRESS   // Highlight path cells already traversed
+};
+
 // --- UIGrid class for grid UI management ---
 class UIGrid {
 public:
@@ -314,8 +321,8 @@ public:
     void setSize(int rows, int cols);
     void setBounds(int bx, int by, int w, int h);
     void drawGridLines(Adafruit_ILI9341 &tft);
-    void drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, UIState state);
-    void drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, UIState state, int startRow, int endRow, int startCol, int endCol);
+    void drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, GridRenderMode mode);
+    void drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, GridRenderMode mode, int startRow, int endRow, int startCol, int endCol);
     static bool isPointInRect(int x, int y, int rectX, int rectY, int rectWidth, int rectHeight);
     bool contains(int x, int y) const;
 };

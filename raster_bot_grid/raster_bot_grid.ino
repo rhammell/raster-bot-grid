@@ -136,10 +136,23 @@ void initUI() {
   settingsMenu.layout();
 }
 
+GridRenderMode currentGridRenderMode() {
+  // Translate app state into a view-layer render mode
+  switch (uiState) {
+    case IDLE:
+      return GRID_RENDER_EDIT;
+    case RUNNING:
+    case COMPLETE:
+      return GRID_RENDER_PROGRESS;
+    default:
+      return GRID_RENDER_PLAIN;
+  }
+}
+
 void drawUI() {
   // Draw all UI elements
   uiGrid.drawGridLines(bot.display);
-  uiGrid.drawGridCells(bot.display, gridModel, uiState);
+  uiGrid.drawGridCells(bot.display, gridModel, currentGridRenderMode());
   undoButton.draw(bot.display);
   startButton.draw(bot.display);
   settingsButton.draw(bot.display);
@@ -246,7 +259,7 @@ void executeMovement() {
         if (millis() - moveStartTime >= FORWARD_MOVE_TIME) {
           // Get current path cell for visual update
           PathCell current = gridModel.getCurrentPathCell();
-          uiGrid.drawGridCells(bot.display, gridModel, uiState, current.row, current.row, current.col, current.col);
+          uiGrid.drawGridCells(bot.display, gridModel, currentGridRenderMode(), current.row, current.row, current.col, current.col);
 
           // Check if we've reached the end of the path
           if (gridModel.isPathComplete()) {
@@ -427,7 +440,7 @@ void onTouchStartButton() {
   }
 
   // Redraw grid cells
-  uiGrid.drawGridCells(bot.display, gridModel, uiState);
+  uiGrid.drawGridCells(bot.display, gridModel, currentGridRenderMode());
 }
 
 void onTouchUndoButton() {
@@ -437,7 +450,7 @@ void onTouchUndoButton() {
   gridModel.resetPath();
 
   // Redraw grid cells
-  uiGrid.drawGridCells(bot.display, gridModel, uiState);
+  uiGrid.drawGridCells(bot.display, gridModel, currentGridRenderMode());
 }
 
 void onTouchSettingsButton() {
@@ -468,7 +481,7 @@ void onTouchGrid(int pixelX, int pixelY) {
     gridModel.pathAdd(gridRow, gridCol);
 
     // Redraw grid cells
-    uiGrid.drawGridCells(bot.display, gridModel, uiState, gridRow - 2, gridRow + 2, gridCol - 2, gridCol + 2);
+    uiGrid.drawGridCells(bot.display, gridModel, currentGridRenderMode(), gridRow - 2, gridRow + 2, gridCol - 2, gridCol + 2);
   }
 }
 

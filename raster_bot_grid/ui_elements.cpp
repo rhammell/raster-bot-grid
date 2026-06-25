@@ -252,11 +252,11 @@ void drawCellDirection(Adafruit_ILI9341 &tft, GridModel &model, int gridX, int g
 }
 }
 
-void UIGrid::drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, UIState state) {
-    drawGridCells(tft, model, state, 0, model.getNumRows() - 1, 0, model.getNumCols() - 1);
+void UIGrid::drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, GridRenderMode mode) {
+    drawGridCells(tft, model, mode, 0, model.getNumRows() - 1, 0, model.getNumCols() - 1);
 }
 
-void UIGrid::drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, UIState state, int startRow, int endRow, int startCol, int endCol) {
+void UIGrid::drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, GridRenderMode mode, int startRow, int endRow, int startCol, int endCol) {
     // Clamp values to grid bounds
     startRow = max(0, min(startRow, model.getNumRows() - 1));
     endRow = max(0, min(endRow, model.getNumRows() - 1));
@@ -267,7 +267,7 @@ void UIGrid::drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, UIState stat
         for (int j = startCol; j <= endCol; j++) {
             int color;
             if (model.getGridValue(i, j)) {
-                if (state == RUNNING || state == COMPLETE) {
+                if (mode == GRID_RENDER_PROGRESS) {
                     bool isProcessed = false;
                     for (int p = 0; p <= model.getCurrentPathIndex(); p++) {
                         PathCell pathCell = model.getPathCell(p);
@@ -284,7 +284,7 @@ void UIGrid::drawGridCells(Adafruit_ILI9341 &tft, GridModel &model, UIState stat
                 } else {
                     color = GRID_SELECTED_COLOR;
                 }
-            } else if (state == IDLE && model.isSelectable(i, j)) {
+            } else if (mode == GRID_RENDER_EDIT && model.isSelectable(i, j)) {
                 color = GRID_SELECTABLE_COLOR;
             } else {
                 color = GRID_EMPTY_COLOR;
