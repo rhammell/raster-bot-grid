@@ -3,7 +3,16 @@
 #include "ui_elements.h"
 #include "grid_model.h"
 #include "settings_manager.h"
-#include "state.h"
+#include "drive_controller.h"
+
+// UI state for the application's screen/mode state machine
+enum UIState {
+  IDLE,
+  COUNTING,
+  RUNNING,
+  SETTINGS,
+  COMPLETE
+};
 
 // Raster Bot instance (handles display and touch)
 Raster_Bot bot;
@@ -15,6 +24,9 @@ int screenHeight;
 // Grid model instance
 GridModel gridModel;
 
+// Drive controller (operates on the grid model)
+DriveController driveController(gridModel);
+
 // Settings manager instance
 SettingsManager settingsManager;
 
@@ -25,22 +37,12 @@ UIIconButton settingsButton;
 UISettingsMenu settingsMenu;
 UIGrid uiGrid;
 
-// Set current state
+// Current UI state
 UIState uiState = IDLE;
-
-// Set current state
-DriveState driveState = STOPPED;
 
 // Default countdown state
 unsigned long countdownStart = 0;
 const int countdownDuration = 5000;
-
-// Movement timing constants
-const unsigned long FORWARD_MOVE_TIME = 2000;  // Time to move forward one cell
-const unsigned long TURN_MOVE_TIME = 2000;     // Time to execute a 90-degree turn
-
-// Current movement tracking
-unsigned long moveStartTime;  // Start time of current movement
 
 // Touch debounce delay
 unsigned long lastTouchTime = 0;
@@ -206,120 +208,6 @@ void refreshStartButton(int countdownNumber) {
   startButton.draw(bot.display);
 }
 
-int calculateTurn(Direction currentDir, Direction targetDir) {
-  // Calculate difference between current and target direction
-  int diff = static_cast<int>(targetDir) - static_cast<int>(currentDir);
-
-  // Normalize to -1 (left) or 1 (right)
-  if (diff == 3) diff = -1;
-  if (diff == -3) diff = 1;
-
-  return diff;
-}
-
-void executeMovement() {
-  // Main movement state machine that handles bot navigation through the grid
-  switch (driveState) {
-
-    // Handle stopped state - determine next action (turn or drive)
-    case STOPPED:
-      {
-        // Get the target direction from the current path point
-        Direction targetDirection = gridModel.getNextDirection();
-
-        // Check if bot is already aligned with target direction
-        if (gridModel.getCurrentDirection() == targetDirection) {
-          // Bot is aligned, transition to driving state
-          driveState = DRIVING;
-          // Here you would add actual motor control:
-          // driveForward();
-          Serial.println("Driving");
-        }
-        // Bot needs to turn to align with target direction
-        else {
-          // Transition to turning state
-          driveState = TURNING;
-          // Calculate which direction to turn (left or right)
-          int turn = calculateTurn(gridModel.getCurrentDirection(), targetDirection);
-          // Here you would add actual motor control:
-          // if (turn < 0) turnLeft();
-          // if (turn > 0) turnRight();
-          Serial.print("Turning ");
-          Serial.println(turn < 0 ? "left" : "right");
-        }
-        // Record the start time for movement timing
-        moveStartTime = millis();
-        break;
-      }
-
-    // Handle driving state - move forward for specified duration
-    case DRIVING:
-      {
-        // Check if forward movement duration has elapsed
-        if (millis() - moveStartTime >= FORWARD_MOVE_TIME) {
-          // Get current path cell for visual update
-          PathCell current = gridModel.getCurrentPathCell();
-          uiGrid.drawGridCells(bot.display, gridModel, currentGridRenderMode(), current.row, current.row, current.col, current.col);
-
-          // Check if we've reached the end of the path
-          if (gridModel.isPathComplete()) {
-            // Path is complete, stop all movement
-            // Here you would stop motors:
-            // stopMotors();
-            Serial.println("Path complete");
-            // Update UI to show completion state
-            uiState = COMPLETE;
-            driveState = STOPPED;
-            refreshStartButton();
-          }
-          // Path is not complete, prepare for next movement
-          else {
-            // Reset timer for next movement segment
-            moveStartTime = millis();
-            // Get direction for next path point
-            Direction nextDirection = gridModel.getNextDirection();
-            // Advance to next path point
-            gridModel.setCurrentPathIndex(gridModel.getCurrentPathIndex() + 1);
-
-            // Check if direction changes at next point
-            if (nextDirection != gridModel.getCurrentDirection()) {
-              // Direction changes, stop for turn
-              driveState = STOPPED;
-              // Here you would stop motors:
-              // stopMotors();
-              Serial.println("Stopping for turn");
-            }
-            // Direction remains same, continue driving
-            else {
-              Serial.println("Continuing forward");
-              // No need to modify motors, just keep driving
-            }
-          }
-        }
-        break;
-      }
-
-    // Handle turning state - execute 90-degree turn
-    case TURNING:
-      {
-        // Check if turn duration has elapsed
-        if (millis() - moveStartTime >= TURN_MOVE_TIME) {
-          // Get target direction for after turn
-          Direction targetDirection = gridModel.getNextDirection();
-          // Update bot's current direction and transition to driving
-          gridModel.setCurrentDirection(targetDirection);
-          driveState = DRIVING;
-          moveStartTime = millis();
-          // Here you would update motor control:
-          // stopTurning();
-          // driveForward();
-          Serial.println("Turn complete, starting forward movement");
-        }
-        break;
-      }
-  }
-}
-
 void handleState() {
   // Handle countdown logic
   if (uiState == COUNTING) {
@@ -327,7 +215,20 @@ void handleState() {
   } 
   // Handle movement execution
   else if (uiState == RUNNING) {
-    executeMovement();
+    // Advance the drive controller and react to its events
+    DriveEvent event = driveController.update();
+
+    // Redraw the cell the bot just reached
+    if (event == DRIVE_CELL_REACHED || event == DRIVE_PATH_COMPLETE) {
+      PathCell cell = driveController.getLastReachedCell();
+      uiGrid.drawGridCells(bot.display, gridModel, currentGridRenderMode(), cell.row, cell.row, cell.col, cell.col);
+    }
+
+    // Path finished: show completion state
+    if (event == DRIVE_PATH_COMPLETE) {
+      uiState = COMPLETE;
+      refreshStartButton();
+    }
   }
 }
 
@@ -344,9 +245,8 @@ void handleCountdown() {
     // Change state to running
     uiState = RUNNING;
 
-    // Initialize path execution
-    gridModel.setCurrentPathIndex(0);
-    gridModel.setCurrentDirection(UP);
+    // Begin executing the path
+    driveController.start();
 
     // Reset our static variable for the next countdown
     lastCountdownNumber = -1;
@@ -432,7 +332,7 @@ void onTouchStartButton() {
     case COMPLETE:
       // Change state to idle and reset drive state
       uiState = IDLE;
-      driveState = STOPPED;
+      driveController.stop();
 
       // Update and draw start button
       refreshStartButton();
